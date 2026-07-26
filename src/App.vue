@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import Temple from './views/Temple.vue'
+import { RouterView } from 'vue-router'
 </script>
 
 <template>
-  <Temple />
+  <RouterView />
 </template>
 
 <style scoped>
