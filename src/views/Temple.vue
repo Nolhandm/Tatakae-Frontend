@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import Temple from './views/Temple.vue'
+
 </script>
 
 <template>
-  <Temple />
+  <h1> This is the Temple view ! </h1>
 </template>
 
 <style scoped>
