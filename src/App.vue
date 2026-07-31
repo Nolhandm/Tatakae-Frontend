@@ -1,11 +1,18 @@
-<script setup lang="ts">
-import { RouterView } from 'vue-router'
+<script setup>
+import NavBar from '@/components/NavBar.vue'
 </script>
 
 <template>
-  <RouterView />
+  <NavBar />
+  <main>
+    <RouterView />
+  </main>
 </template>
 
 <style scoped>
-
+main {
+  padding: 1.5rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
 </style>

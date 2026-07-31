@@ -1,9 +1,9 @@
 <script setup lang="ts">
-
+  import CharacterComponent from '@/components/CharacterComponent.vue'
 </script>
 
 <template>
-  <h1> This is the Temple view ! </h1>
+  <CharacterComponent />
 </template>
 
 <style scoped>
