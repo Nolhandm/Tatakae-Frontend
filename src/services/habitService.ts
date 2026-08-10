@@ -41,3 +41,12 @@ export async function uncheckHabit(habitId, validationDate) {
   })
   if (!response.ok) throw new Error("Erreur lors de l'annulation")
 }
+
+export async function deleteHabit(habitId){
+  const response = await fetch(`${API_URL}/habits/${habitId}`, {
+    method: 'DELETE'
+  })
+  if (!response.ok) throw new Error("Erreur lors de la suppression de l'habitude")
+  return response.json()
+}
+

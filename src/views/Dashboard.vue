@@ -7,6 +7,7 @@ import {
   uncheckHabit
 } from '@/services/habitService'
 import CharacterComponent from '@/components/CharacterComponent.vue'
+import DeleteButton from '@/components/DeleteButton.vue'
 
 // ---------------------------------------------
 // ----------- État réactif --------------------
@@ -86,6 +87,11 @@ onMounted(async () => {
   await syncCheckboxes()
   loading.value = false
 })
+
+function handleHabitDeleted(habitId) {
+  habits.value = habits.value.filter(h => h.habit_id !== habitId)
+}
+
 </script>
 
 <template>
@@ -118,6 +124,7 @@ onMounted(async () => {
             :checked="checkedHabitIds.has(habit.habit_id)"
             @change="toggleHabit(habit)"
           />
+          <DeleteButton :habitId="habit.habit_id" @deleted="handleHabitDeleted" @error="console.error"/>
         </div>
       </div>
     </div>
