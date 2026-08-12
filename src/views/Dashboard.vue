@@ -1,13 +1,12 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import {
-  getAllQuests,
-  getAllCheckedQuestIds,
+  fetchQuests,
+  getAllCheckedQuestIdsAtDate,
   checkQuest,
   uncheckQuest
 } from '../services/questsService.ts'
 import CharacterComponent from '@/components/CharacterComponent.vue'
-import DeleteQuestButton from '../components/DeleteQuestButton.vue'
 
 // ---------------------------------------------
 // ----------- État réactif --------------------
@@ -40,11 +39,11 @@ function nextDate() {
 }
 
 async function loadQuests() {
-  quests.value = await getAllQuests()
+  quests.value = await fetchQuests()
 }
 
 async function syncCheckboxes() {
-  const ids = await getAllCheckedQuestIds(actualDate.value)
+  const ids = await getAllCheckedQuestIdsAtDate(actualDate.value)
   checkedQuestIds.value = new Set(ids)
 }
 
@@ -88,10 +87,6 @@ onMounted(async () => {
   loading.value = false
 })
 
-function handleQuestDeleted(questId) {
-  quests.value = quests.value.filter(h => h.quest_id !== questId)
-}
-
 </script>
 
 <template>
@@ -124,7 +119,6 @@ function handleQuestDeleted(questId) {
             :checked="checkedQuestIds.has(quest.quest_id)"
             @change="toggleQuest(quest)"
           />
-          <DeleteQuestButton :questId="quest.quest_id" @deleted="handleQuestDeleted" @error="console.error"/>
         </div>
       </div>
     </div>

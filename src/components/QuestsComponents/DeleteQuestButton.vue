@@ -1,15 +1,13 @@
 <script setup lang="ts">
-import { deleteQuest } from '../services/questsService'
 import { ref } from 'vue'
+import { useQuestsStore } from '@/stores/questsStore'
 
-const props = defineProps({
-  questId: {
-    type: Number,
-    required: true
-  }
-})
+const props = defineProps<{
+  questId: number
+}>()
 
-const emit = defineEmits(['deleted','error'])
+const questStore = useQuestsStore()
+const emit = defineEmits(['error'])
 
 const isConfirming = ref(false)
 const isDeleting = ref(false)
@@ -25,7 +23,7 @@ function cancelConfirmation() {
 async function confirmDelete() {
   isDeleting.value = true
   try {
-    await deleteQuest(props.questId)
+    await questStore.deleteQuest(props.questId)
     emit('deleted', props.questId)
   } catch (err) {
     emit('error', err)

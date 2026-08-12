@@ -1,6 +1,9 @@
-<script setup>
-import { ref, onMounted } from 'vue'
-import { addNewQuest, getAllQuests } from '../services/questsService.ts'
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useQuestsStore } from '@/stores/questsStore'
+import type { QuestCreate } from '@/types/Quest'
+
+const questStore = useQuestsStore()
 
 const options = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
@@ -11,11 +14,7 @@ const difficulte = ref(5)
 const importance = ref(5)
 const errorMessage = ref('')
 const successMessage = ref('')
-const quests = ref([])
 
-async function loadQuests() {
-  quests.value = await getAllQuests()
-}
 
 async function handleSubmit() {
   errorMessage.value = ''
@@ -26,21 +25,27 @@ async function handleSubmit() {
     return
   }
 
+  const newQuest: QuestCreate = {
+    name: nom.value,
+    time_coeff: temps.value,
+    difficulty_coeff: difficulte.value,
+    importance_coeff: importance.value
+  }
+
   try {
-    await addNewQuest(nom.value, temps.value, difficulte.value, importance.value)
+    await questStore.createQuest(newQuest)
     successMessage.value = 'Quête ajoutée !'
     nom.value = ''
     temps.value = 5
     difficulte.value = 5
     importance.value = 5
     isExpanded.value = false
-    await loadQuests()
   } catch (err) {
     errorMessage.value = err.message
   }
 }
 
-onMounted(loadQuests)
+
 </script>
 
 <template>
@@ -86,25 +91,7 @@ onMounted(loadQuests)
       </form>
     </div>
 
-    <!-- Tableau des quêtes -->
-    <table class="quest-table">
-      <thead>
-      <tr>
-        <th>Nom</th>
-        <th>Temps</th>
-        <th>Difficulté</th>
-        <th>Importance</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr v-for="quest in quests" :key="quest.quest_id">
-        <td>{{ quest.name }}</td>
-        <td>{{ quest.time_coeff }}</td>
-        <td>{{ quest.difficulty_coeff }}</td>
-        <td>{{ quest.importance_coeff }}</td>
-      </tr>
-      </tbody>
-    </table>
+
   </div>
 </template>
 
@@ -163,15 +150,5 @@ onMounted(loadQuests)
   color: #16a34a;
 }
 
-.quest-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-}
-.quest-table th,
-.quest-table td {
-  border: 1px solid #e5e5e5;
-  padding: 0.5rem 0.75rem;
-  text-align: left;
-}
+
 </style>
