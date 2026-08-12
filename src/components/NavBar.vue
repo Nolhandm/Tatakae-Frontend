@@ -5,7 +5,7 @@ import { RouterLink } from 'vue-router'
 <template>
   <nav class="navbar">
     <RouterLink to="/" class="nav-link">🏠 Accueil</RouterLink>
-    <RouterLink to="/habitudes" class="nav-link">✅ Quêtes</RouterLink>
+    <RouterLink to="/quests" class="nav-link">✅ Quêtes</RouterLink>
     <RouterLink to="/dashboard" class="nav-link">📊 Dashboard</RouterLink>
   </nav>
 </template>

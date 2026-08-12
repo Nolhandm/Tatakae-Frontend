@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { addNewHabit, getAllHabits } from '@/services/habitService'
+import { addNewQuest, getAllQuests } from '../services/questsService.ts'
 
 const options = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
@@ -11,10 +11,10 @@ const difficulte = ref(5)
 const importance = ref(5)
 const errorMessage = ref('')
 const successMessage = ref('')
-const habitudes = ref([])
+const quests = ref([])
 
-async function loadHabits() {
-  habitudes.value = await getAllHabits()
+async function loadQuests() {
+  quests.value = await getAllQuests()
 }
 
 async function handleSubmit() {
@@ -27,35 +27,35 @@ async function handleSubmit() {
   }
 
   try {
-    await addNewHabit(nom.value, temps.value, difficulte.value, importance.value)
-    successMessage.value = 'Habitude ajoutée !'
+    await addNewQuest(nom.value, temps.value, difficulte.value, importance.value)
+    successMessage.value = 'Quête ajoutée !'
     nom.value = ''
     temps.value = 5
     difficulte.value = 5
     importance.value = 5
     isExpanded.value = false
-    await loadHabits()
+    await loadQuests()
   } catch (err) {
     errorMessage.value = err.message
   }
 }
 
-onMounted(loadHabits)
+onMounted(loadQuests)
 </script>
 
 <template>
-  <div class="habit-manager">
+  <div class="quest-manager">
     <!-- Expander -->
     <div class="expander">
       <button class="expander-header" @click="isExpanded = !isExpanded">
-        ➕ Ajouter une nouvelle habitude
+        ➕ Ajouter une nouvelle quête
         <span class="chevron" :class="{ open: isExpanded }">▾</span>
       </button>
 
-      <form v-if="isExpanded" class="habit-form" @submit.prevent="handleSubmit">
+      <form v-if="isExpanded" class="quest-form" @submit.prevent="handleSubmit">
         <label>
-          Nom de l'habitude
-          <input v-model="nom" type="text" placeholder="Nom de l'habitude" />
+          Nom de la quête
+          <input v-model="nom" type="text" placeholder="Nom de la quête" />
         </label>
 
         <label>
@@ -86,8 +86,8 @@ onMounted(loadHabits)
       </form>
     </div>
 
-    <!-- Tableau des habitudes -->
-    <table class="habit-table">
+    <!-- Tableau des quêtes -->
+    <table class="quest-table">
       <thead>
       <tr>
         <th>Nom</th>
@@ -97,11 +97,11 @@ onMounted(loadHabits)
       </tr>
       </thead>
       <tbody>
-      <tr v-for="habit in habitudes" :key="habit.habit_id">
-        <td>{{ habit.name }}</td>
-        <td>{{ habit.time_coeff }}</td>
-        <td>{{ habit.difficulty_coeff }}</td>
-        <td>{{ habit.importance_coeff }}</td>
+      <tr v-for="quest in quests" :key="quest.quest_id">
+        <td>{{ quest.name }}</td>
+        <td>{{ quest.time_coeff }}</td>
+        <td>{{ quest.difficulty_coeff }}</td>
+        <td>{{ quest.importance_coeff }}</td>
       </tr>
       </tbody>
     </table>
@@ -130,7 +130,7 @@ onMounted(loadHabits)
   transform: rotate(180deg);
 }
 
-.habit-form {
+.quest-form {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -139,14 +139,14 @@ onMounted(loadHabits)
   border-top: none;
 }
 
-.habit-form label {
+.quest-form label {
   display: flex;
   flex-direction: column;
   font-size: 0.9rem;
   gap: 0.25rem;
 }
 
-.habit-form button[type='submit'] {
+.quest-form button[type='submit'] {
   align-self: flex-start;
   padding: 0.5rem 1.5rem;
   background: #4f46e5;
@@ -163,13 +163,13 @@ onMounted(loadHabits)
   color: #16a34a;
 }
 
-.habit-table {
+.quest-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
 }
-.habit-table th,
-.habit-table td {
+.quest-table th,
+.quest-table td {
   border: 1px solid #e5e5e5;
   padding: 0.5rem 0.75rem;
   text-align: left;

@@ -1,20 +1,20 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import {
-  getAllHabits,
-  getAllCheckedHabitIds,
-  checkHabit,
-  uncheckHabit
-} from '@/services/habitService'
+  getAllQuests,
+  getAllCheckedQuestIds,
+  checkQuest,
+  uncheckQuest
+} from '../services/questsService.ts'
 import CharacterComponent from '@/components/CharacterComponent.vue'
-import DeleteButton from '@/components/DeleteButton.vue'
+import DeleteQuestButton from '../components/DeleteQuestButton.vue'
 
 // ---------------------------------------------
 // ----------- État réactif --------------------
 // ---------------------------------------------
 const actualDate = ref(toDateInputString(new Date()))
-const habits = ref([])
-const checkedHabitIds = ref(new Set())
+const quests = ref([])
+const checkedQuestIds = ref(new Set())
 const loading = ref(true)
 const characterRef = ref(null)
 
@@ -39,41 +39,41 @@ function nextDate() {
   shiftDate(1)
 }
 
-async function loadHabits() {
-  habits.value = await getAllHabits()
+async function loadQuests() {
+  quests.value = await getAllQuests()
 }
 
 async function syncCheckboxes() {
-  const ids = await getAllCheckedHabitIds(actualDate.value)
-  checkedHabitIds.value = new Set(ids)
+  const ids = await getAllCheckedQuestIds(actualDate.value)
+  checkedQuestIds.value = new Set(ids)
 }
 
-async function toggleHabit(habit) {
-  const isCurrentlyChecked = checkedHabitIds.value.has(habit.habit_id)
+async function toggleQuest(quest) {
+  const isCurrentlyChecked = checkedQuestIds.value.has(quest.quest_id)
 
   // Optimistic update : on met à jour l'UI avant la réponse serveur pour que ce soit instantané
   if (isCurrentlyChecked) {
-    checkedHabitIds.value.delete(habit.habit_id)
+    checkedQuestIds.value.delete(quest.quest_id)
   } else {
-    checkedHabitIds.value.add(habit.habit_id)
+    checkedQuestIds.value.add(quest.quest_id)
   }
-  checkedHabitIds.value = new Set(checkedHabitIds.value) // force la réactivité (Set n'est pas trackée nativement)
+  checkedQuestIds.value = new Set(checkedQuestIds.value) // force la réactivité (Set n'est pas trackée nativement)
 
   try {
     if (isCurrentlyChecked) {
-      await uncheckHabit(habit.habit_id, actualDate.value)
+      await uncheckQuest(quest.quest_id, actualDate.value)
     } else {
-      await checkHabit(habit.habit_id, actualDate.value)
+      await checkQuest(quest.quest_id, actualDate.value)
     }
     await characterRef.value?.loadStats()
   } catch (err) {
     // rollback si l'appel API échoue
     if (isCurrentlyChecked) {
-      checkedHabitIds.value.add(habit.habit_id)
+      checkedQuestIds.value.add(quest.quest_id)
     } else {
-      checkedHabitIds.value.delete(habit.habit_id)
+      checkedQuestIds.value.delete(quest.quest_id)
     }
-    checkedHabitIds.value = new Set(checkedHabitIds.value)
+    checkedQuestIds.value = new Set(checkedQuestIds.value)
     console.error(err)
   }
 }
@@ -83,13 +83,13 @@ watch(actualDate, syncCheckboxes)
 
 onMounted(async () => {
   loading.value = true
-  await loadHabits()
+  await loadQuests()
   await syncCheckboxes()
   loading.value = false
 })
 
-function handleHabitDeleted(habitId) {
-  habits.value = habits.value.filter(h => h.habit_id !== habitId)
+function handleQuestDeleted(questId) {
+  quests.value = quests.value.filter(h => h.quest_id !== questId)
 }
 
 </script>
@@ -107,24 +107,24 @@ function handleHabitDeleted(habitId) {
 
     <hr />
 
-    <!-- Liste des habitudes -->
+    <!-- Liste des Quêtes -->
     <h2>✅ Liste des quêtes</h2>
 
     <p v-if="loading">Chargement...</p>
 
-    <div v-else class="habit-list">
-      <div v-for="habit in habits" :key="habit.habit_id" class="habit-row">
-        <div class="habit-name">{{ habit.name }}</div>
-        <div class="habit-info">
-          ⏱️ {{ habit.time_coeff }}min | ⚡ {{ habit.difficulty_coeff }}/10
+    <div v-else class="quest-list">
+      <div v-for="quest in quests" :key="quest.quest_id" class="quest-row">
+        <div class="quest-name">{{ quest.name }}</div>
+        <div class="quest-info">
+          ⏱️ {{ quest.time_coeff }}min | ⚡ {{ quest.difficulty_coeff }}/10
         </div>
-        <div class="habit-check">
+        <div class="quest-check">
           <input
             type="checkbox"
-            :checked="checkedHabitIds.has(habit.habit_id)"
-            @change="toggleHabit(habit)"
+            :checked="checkedQuestIds.has(quest.quest_id)"
+            @change="toggleQuest(quest)"
           />
-          <DeleteButton :habitId="habit.habit_id" @deleted="handleHabitDeleted" @error="console.error"/>
+          <DeleteQuestButton :questId="quest.quest_id" @deleted="handleQuestDeleted" @error="console.error"/>
         </div>
       </div>
     </div>
@@ -162,13 +162,13 @@ function handleHabitDeleted(habitId) {
   text-align: center;
 }
 
-.habit-list {
+.quest-list {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.habit-row {
+.quest-row {
   display: grid;
   grid-template-columns: 0.7fr 0.2fr 0.1fr;
   align-items: center;
@@ -177,17 +177,17 @@ function handleHabitDeleted(habitId) {
   border-radius: 6px;
 }
 
-.habit-info {
+.quest-info {
   font-size: 0.85rem;
   color: #666;
 }
 
-.habit-check {
+.quest-check {
   display: flex;
   justify-content: center;
 }
 
-.habit-check input[type='checkbox'] {
+.quest-check input[type='checkbox'] {
   width: 1.3rem;
   height: 1.3rem;
   cursor: pointer;

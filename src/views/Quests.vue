@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import newHabitForm from '@/components/newHabitForm.vue'
+import NewQuestForm from '../components/NewQuestForm.vue'
 </script>
 
 <template>
-  <newHabitForm />
+  <NewQuestForm />
 </template>
 
 <style scoped>

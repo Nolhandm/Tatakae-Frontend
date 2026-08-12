@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Temple from '../views/Temple.vue'
 import Dashboard from '../views/Dashboard.vue'
-import Habitudes from '../views/Habitudes.vue'
+import Quest from '../views/Quests.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -12,9 +12,9 @@ const router = createRouter({
       component: Temple,
     },
     {
-      path: '/habitudes',
-      name: 'Habitudes',
-      component: Habitudes,
+      path: '/quests',
+      name: 'Quest',
+      component: Quest,
     },
     {
       path: '/dashboard',

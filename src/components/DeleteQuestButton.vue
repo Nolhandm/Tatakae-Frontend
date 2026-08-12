@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { deleteHabit } from '@/services/habitService'
+import { deleteQuest } from '../services/questsService'
 import { ref } from 'vue'
 
 const props = defineProps({
-  habitId: {
+  questId: {
     type: Number,
     required: true
   }
@@ -25,8 +25,8 @@ function cancelConfirmation() {
 async function confirmDelete() {
   isDeleting.value = true
   try {
-    await deleteHabit(props.habitId)
-    emit('deleted', props.habitId)
+    await deleteQuest(props.questId)
+    emit('deleted', props.questId)
   } catch (err) {
     emit('error', err)
     console.error(err)
@@ -39,19 +39,19 @@ async function confirmDelete() {
 </script>
 
 <template>
-  <div class="delete-habit">
+  <div class="delete-quest">
     <button
       v-if="!isConfirming"
       class="delete-btn"
       @click="askConfirmation"
       :disabled="isDeleting"
-      title="Supprimer l'habitude"
+      title="Supprimer la quête"
     >
       🗑️
     </button>
 
     <div v-else class="confirm-box">
-      <span class="confirm-text">Supprimer{{ habitName ? ` "${habitName}"` : '' }} ?</span>
+      <span class="confirm-text">Supprimer{{ questName ? ` "${questName}"` : '' }} ?</span>
       <button class="confirm-yes" @click="confirmDelete" :disabled="isDeleting">
         {{ isDeleting ? '...' : 'Oui' }}
       </button>
@@ -63,7 +63,7 @@ async function confirmDelete() {
 </template>
 
 <style scoped>
-.delete-habit {
+.delete-quest {
   display: flex;
   align-items: center;
 }
