@@ -1,10 +1,18 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { fetchQuests } from '../../services/questsService.ts'
+import { onMounted , computed} from 'vue'
 import DeleteQuestButton from './DeleteQuestButton.vue'
 import { useQuestsStore } from '../../stores/questsStore'
+import { useArcsStore } from '../../stores/arcsStore'
 
+const arcStore = useArcsStore()
 const questStore = useQuestsStore()
+
+const filteredQuests = computed(() => {
+  if (arcStore.selectedArcId === null) {
+    return questStore.quests
+  }
+  return questStore.quests.filter(q => q.arc_id === arcStore.selectedArcId)
+})
 
 onMounted(() => {
   questStore.fetchQuests()
@@ -24,7 +32,7 @@ onMounted(() => {
     </tr>
     </thead>
     <tbody>
-    <tr v-for="quest in questStore.quests" :key="quest.quest_id">
+    <tr v-for="quest in filteredQuests" :key="quest.quest_id">
       <td>{{ quest.name }}</td>
       <td>{{ quest.time_coeff }}</td>
       <td>{{ quest.difficulty_coeff }}</td>

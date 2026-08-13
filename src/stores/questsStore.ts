@@ -8,6 +8,7 @@ export const useQuestsStore = defineStore('questsStore', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
+
   async function fetchQuests() {
     loading.value = true
     try {
@@ -24,7 +25,6 @@ export const useQuestsStore = defineStore('questsStore', () => {
   async function createQuest(questCreate: QuestCreate) {
     const newQuest = await questsService.createQuest(questCreate)
     quests.value.push(newQuest)
-    return newQuest
   }
 
   async function deleteQuest(questId: number) {

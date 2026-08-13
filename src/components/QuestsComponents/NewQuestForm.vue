@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useQuestsStore } from '@/stores/questsStore'
-import type { QuestCreate } from '@/types/Quest'
+import { useArcsStore } from '@/stores/arcsStore'
+import type { QuestCreate , QuestCreateNoArc} from '@/types/Quest'
 
 const questStore = useQuestsStore()
+const arcStore = useArcsStore()
 
 const options = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
@@ -12,13 +14,12 @@ const nom = ref('')
 const temps = ref(5)
 const difficulte = ref(5)
 const importance = ref(5)
+const arcId = ref<number | null>(null)
 const errorMessage = ref('')
-const successMessage = ref('')
 
 
 async function handleSubmit() {
   errorMessage.value = ''
-  successMessage.value = ''
 
   if (!nom.value || nom.value.trim() === '') {
     errorMessage.value = "Le nom n'est pas valide"
@@ -29,17 +30,19 @@ async function handleSubmit() {
     name: nom.value,
     time_coeff: temps.value,
     difficulty_coeff: difficulte.value,
-    importance_coeff: importance.value
+    importance_coeff: importance.value,
+    arc_id: arcId.value
   }
+
 
   try {
     await questStore.createQuest(newQuest)
-    successMessage.value = 'Quête ajoutée !'
     nom.value = ''
     temps.value = 5
     difficulte.value = 5
     importance.value = 5
     isExpanded.value = false
+    errorMessage.value = ''
   } catch (err) {
     errorMessage.value = err.message
   }
@@ -84,10 +87,19 @@ async function handleSubmit() {
           </select>
         </label>
 
+        <label>
+          Arc
+          <select v-model.number="arcId">
+            <option :value="null">-- Aucun arc --</option>
+            <option v-for="arc in arcStore.arcs" :key="arc.arc_id" :value="arc.arc_id">
+              {{ arc.name }}
+            </option>
+          </select>
+        </label>
+
         <button type="submit">Ajouter</button>
 
         <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
-        <p v-if="successMessage" class="success">{{ successMessage }}</p>
       </form>
     </div>
 
