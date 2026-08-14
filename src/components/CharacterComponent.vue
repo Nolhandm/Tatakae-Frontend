@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { getCharacterStats } from '@/services/statsService'
-import { DICT_PATH_VAGABOND_IMG } from '@/config'
+import { getImagePathForRank, getRankTitleForRank } from '@/assets/Vagabond/vagabondDatas'
 
 const stats = ref(null)
 const displayedXp = ref(0)
@@ -14,9 +14,19 @@ const xpPercent = computed(() => {
   return Math.min(100, (displayedXp.value / stats.value.xp_needed_this_level) * 100)
 })
 
+const rankTitle = computed(() => {
+  if (!stats.value) return null
+  return getRankTitleForRank(stats.value.rank)
+})
+
+const vagabondImage = computed(() => {
+  if (!stats.value) return null
+  return getImagePathForRank(stats.value.rank)
+})
+
 const characterImage = computed(() => {
   if (!stats.value) return null
-  return DICT_PATH_VAGABOND_IMG[stats.value.rank] || DICT_PATH_VAGABOND_IMG.vagabond
+  return vagabondImage.value
 })
 
 function wait(ms) {
@@ -145,8 +155,6 @@ onMounted(loadStats)
   margin: 1rem auto;
   padding: 1.5rem;
   border-radius: 12px;
-  background: #fafafa;
-  border: 1px solid #e5e5e5;
   text-align: center;
   position: relative;
 }
