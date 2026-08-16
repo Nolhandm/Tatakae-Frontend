@@ -1,44 +1,42 @@
-<script setup>
-import { ref, computed, onMounted } from 'vue'
-import { getCharacterStats } from '@/services/statsService'
+<script setup lang="ts">
+import { ref, computed, onMounted, watch } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useCharacterStore } from '@/stores/characterStore'
 import { getImagePathForRank, getRankTitleForRank } from '@/assets/Vagabond/vagabondDatas'
 
-const stats = ref(null)
+const characterStore = useCharacterStore()
+const { characterStats } = storeToRefs(characterStore)
+
 const displayedXp = ref(0)
 const showLevelUp = ref(false)
 const showLevelDown = ref(false)
-const previousLevel = ref(null)
+const previousLevel = ref<number | null>(null)
 
 const xpPercent = computed(() => {
-  if (!stats.value) return 0
-  return Math.min(100, (displayedXp.value / stats.value.xp_needed_this_level) * 100)
+  if (!characterStats.value) return 0
+  return Math.min(100, (displayedXp.value / characterStats.value.xp_needed) * 100)
 })
 
 const rankTitle = computed(() => {
-  if (!stats.value) return null
-  return getRankTitleForRank(stats.value.rank)
-})
-
-const vagabondImage = computed(() => {
-  if (!stats.value) return null
-  return getImagePathForRank(stats.value.rank)
+  if (!characterStats.value) return null
+  return getRankTitleForRank(characterStats.value.actual_rank)
 })
 
 const characterImage = computed(() => {
-  if (!stats.value) return null
-  return vagabondImage.value
+  if (!characterStats.value) return undefined
+  return getImagePathForRank(characterStats.value.actual_rank)
 })
 
-function wait(ms) {
+function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-function animateXpBarTo(targetValue, duration = 800) {
-  return new Promise((resolve) => {
+function animateXpBarTo(targetValue: number, duration = 800) {
+  return new Promise<void>((resolve) => {
     const start = displayedXp.value
     const startTime = performance.now()
 
-    function step(currentTime) {
+    function step(currentTime: number) {
       const elapsed = currentTime - startTime
       const progress = Math.min(elapsed / duration, 1)
       const eased = 1 - Math.pow(1 - progress, 3)
@@ -54,45 +52,29 @@ function animateXpBarTo(targetValue, duration = 800) {
   })
 }
 
-async function loadStats() {
-  const newStats = await getCharacterStats()
-  const hasLeveledUp = previousLevel.value !== null && newStats.level > previousLevel.value
-  const hasLeveledDown = previousLevel.value !== null && newStats.level < previousLevel.value
+async function playStatsAnimation(stats: NonNullable<typeof characterStats.value>) {
+  const hasLeveledUp = previousLevel.value !== null && stats.actual_level > previousLevel.value
+  const hasLeveledDown = previousLevel.value !== null && stats.actual_level < previousLevel.value
 
-  if (hasLeveledUp && stats.value) {
-    // 1. Termine la barre actuelle à 100%
-    await animateXpBarTo(stats.value.xp_needed_this_level, 500)
+  if (hasLeveledUp) {
+    await animateXpBarTo(stats.xp_needed, 500)
     await wait(200)
-
-    // 2. Passe au nouveau niveau, vide la barre, déclenche le popup
-    stats.value = newStats
     displayedXp.value = 0
     triggerLevelUp()
     await wait(400)
-
-    // 3. Remplit la nouvelle barre depuis 0
-    await animateXpBarTo(newStats.current_xp_in_level, 900)
-
-  } else if (hasLeveledDown && stats.value) {
-    // 1. Vide la barre actuelle jusqu'à 0
+    await animateXpBarTo(stats.actual_xp, 900)
+  } else if (hasLeveledDown) {
     await animateXpBarTo(0, 500)
     await wait(200)
-
-    // 2. Repasse à l'ancien niveau, remplit la barre à 100%, déclenche le popup de régression
-    stats.value = newStats
-    displayedXp.value = newStats.xp_needed_this_level
+    displayedXp.value = stats.xp_needed
     triggerLevelDown()
     await wait(400)
-
-    // 3. Vide progressivement vers la nouvelle valeur réelle
-    await animateXpBarTo(newStats.current_xp_in_level, 900)
-
+    await animateXpBarTo(stats.actual_xp, 900)
   } else {
-    stats.value = newStats
-    await animateXpBarTo(newStats.current_xp_in_level)
+    await animateXpBarTo(stats.actual_xp)
   }
 
-  previousLevel.value = newStats.level
+  previousLevel.value = stats.actual_level
 }
 
 function triggerLevelUp() {
@@ -109,43 +91,57 @@ function triggerLevelDown() {
   }, 2000)
 }
 
-defineExpose({ loadStats })
+watch(characterStats, (newStats) => {
+  if (newStats) playStatsAnimation(newStats)
+})
 
-onMounted(loadStats)
+onMounted(() => {
+  characterStore.fetchCharacterStats()
+})
 </script>
 
 <template>
-  <div class="character-card" v-if="stats">
+  <div class="character-card" v-if="characterStats">
     <h2>Personnage</h2>
 
     <div class="character-visual">
       <Transition name="rank-fade" mode="out-in">
-        <img :key="stats.rank" :src="characterImage" :alt="stats.rank" class="character-img" />
+        <img
+          :key="characterStats.actual_rank"
+          :src="characterImage"
+          :alt="String(characterStats.actual_rank)"
+          class="character-img"
+        />
       </Transition>
 
       <Transition name="levelup-pop">
         <div v-if="showLevelUp" class="level-up-badge">
-          🎉 Niveau {{ stats.level }} !
+          🎉 Niveau {{ characterStats.actual_level }} !
         </div>
       </Transition>
 
       <Transition name="levelup-pop">
         <div v-if="showLevelDown" class="level-down-badge">
-          📉 Niveau {{ stats.level }}
+          📉 Niveau {{ characterStats.actual_level }}
         </div>
       </Transition>
     </div>
 
-    <p class="level-label">Niveau actuel : <strong>{{ stats.level }}</strong></p>
+    <p class="level-label">
+      Niveau actuel : <strong>{{ characterStats.actual_level }}</strong>
+    </p>
+    <p class="rank-title">
+      <strong>{{ rankTitle?.title }}</strong> - {{ rankTitle?.description }}
+    </p>
 
     <div class="xp-bar-container">
       <div class="xp-bar-fill" :style="{ width: xpPercent + '%' }"></div>
       <span class="xp-bar-text">
-        {{ Math.round(displayedXp) }} / {{ stats.xp_needed_this_level }} XP
+        {{ Math.round(displayedXp) }} / {{ characterStats.xp_needed }} XP
       </span>
     </div>
 
-    <p class="total-xp">XP total cumulé : {{ stats.total_xp }}</p>
+    <p class="total-xp">XP total cumulé : {{ characterStats.total_xp_cumulated }}</p>
   </div>
 </template>
 
@@ -189,7 +185,7 @@ onMounted(loadStats)
 .xp-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, #6366f1, #8b5cf6);
-  transition: width 0.1s linear; /* le vrai easing est géré par JS via requestAnimationFrame */
+  transition: width 0.1s linear;
   border-radius: 12px;
 }
 
@@ -210,7 +206,6 @@ onMounted(loadStats)
   color: #666;
 }
 
-/* Transition de changement de rang (fondu) */
 .rank-fade-enter-active,
 .rank-fade-leave-active {
   transition: opacity 0.4s ease;
@@ -220,7 +215,6 @@ onMounted(loadStats)
   opacity: 0;
 }
 
-/* Animation du popup de level-up */
 .level-up-badge {
   position: absolute;
   top: -10px;
@@ -258,6 +252,7 @@ onMounted(loadStats)
     transform: translateX(-50%) scale(1);
   }
 }
+
 .level-down-badge {
   position: absolute;
   top: -10px;
@@ -271,5 +266,4 @@ onMounted(loadStats)
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   white-space: nowrap;
 }
-
 </style>

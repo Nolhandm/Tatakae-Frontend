@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted , computed} from 'vue'
+import { onMounted, computed } from 'vue'
 import DeleteQuestButton from './DeleteQuestButton.vue'
 import { useQuestsStore } from '../../stores/questsStore'
 import { useArcsStore } from '../../stores/arcsStore'
@@ -11,7 +11,7 @@ const filteredQuests = computed(() => {
   if (arcStore.selectedArcId === null) {
     return questStore.quests
   }
-  return questStore.quests.filter(q => q.arc_id === arcStore.selectedArcId)
+  return questStore.quests.filter((q) => q.arc_id === arcStore.selectedArcId)
 })
 
 onMounted(() => {
@@ -23,24 +23,30 @@ onMounted(() => {
   <!-- Tableau des quêtes -->
   <table class="quest-table">
     <thead>
-    <tr>
-      <th>Nom</th>
-      <th>Temps</th>
-      <th>Difficulté</th>
-      <th>Importance</th>
-      <th>Supprimer</th>
-    </tr>
+      <tr>
+        <th>Id</th>
+        <th>Nom</th>
+        <th>Arc</th>
+        <th>Temps</th>
+        <th>Difficulté</th>
+        <th>Importance</th>
+        <th>Fréquence</th>
+        <th>Supprimer</th>
+      </tr>
     </thead>
     <tbody>
-    <tr v-for="quest in filteredQuests" :key="quest.quest_id">
-      <td>{{ quest.name }}</td>
-      <td>{{ quest.time_coeff }}</td>
-      <td>{{ quest.difficulty_coeff }}</td>
-      <td>{{ quest.importance_coeff }}</td>
-      <td>
-        <DeleteQuestButton :questId="quest.quest_id" @error="console.error"/>
-      </td>
-    </tr>
+      <tr v-for="quest in filteredQuests" :key="quest.quest_id">
+        <td>{{ quest.quest_id }}</td>
+        <td>{{ quest.name }}</td>
+        <td>{{ quest.arc_id ? arcStore.getArcNameById(quest.arc_id) : 'Aucun arc' }}</td>
+        <td>{{ quest.time_coeff }}</td>
+        <td>{{ quest.difficulty_coeff }}</td>
+        <td>{{ quest.importance_coeff }}</td>
+        <td>{{ quest.frequency_mode }} - {{ quest.frequency }}</td>
+        <td>
+          <DeleteQuestButton :questId="quest.quest_id" @error="console.error" />
+        </td>
+      </tr>
     </tbody>
   </table>
 </template>

@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Temple from '../views/Temple.vue'
-import Dashboard from '../views/Dashboard.vue'
+import Dashboard from '../views/DashBoard.vue'
 import Quest from '../views/Quests.vue'
 
 const router = createRouter({
@@ -20,7 +20,7 @@ const router = createRouter({
       path: '/dashboard',
       name: 'Dashboard',
       component: Dashboard,
-    }
+    },
   ],
 })
 

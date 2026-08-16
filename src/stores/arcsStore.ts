@@ -1,10 +1,9 @@
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { Arc, ArcCreate } from '@/types/Arc'
 import * as arcsService from '@/services/arcsService'
 
 export const useArcsStore = defineStore('arcsStore', () => {
-
   const arcs = ref<Arc[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -14,11 +13,9 @@ export const useArcsStore = defineStore('arcsStore', () => {
     loading.value = true
     try {
       arcs.value = await arcsService.fetchArcs()
-    }
-    catch (err) {
+    } catch (err) {
       error.value = err instanceof Error ? err.message : 'Une erreur est survenue'
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -30,8 +27,13 @@ export const useArcsStore = defineStore('arcsStore', () => {
 
   async function deleteArc(arcId: number) {
     //await arcsService.deleteArc(arcId)
-    arcs.value = arcs.value.filter(q => q.arc_id !== arcId)
+    arcs.value = arcs.value.filter((q) => q.arc_id !== arcId)
   }
 
-  return {arcs, loading, error, fetchArcs, createArc, deleteArc, selectedArcId}
+  function getArcNameById(arcId: number): string {
+    const arc = arcs.value.find((a) => a.arc_id === arcId)
+    return arc ? arc.name : 'Arc inconnu'
+  }
+
+  return { arcs, loading, error, fetchArcs, createArc, deleteArc, getArcNameById, selectedArcId }
 })

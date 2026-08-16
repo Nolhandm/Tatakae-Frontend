@@ -2,21 +2,23 @@
 import { ref } from 'vue'
 import { useQuestsStore } from '@/stores/questsStore'
 import { useArcsStore } from '@/stores/arcsStore'
-import type { QuestCreate , QuestCreateNoArc} from '@/types/Quest'
+import { type QuestCreate, QuestFrequencyMode } from '@/types/Quest'
+
+const emit = defineEmits(['created'])
 
 const questStore = useQuestsStore()
 const arcStore = useArcsStore()
 
 const options = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
-const isExpanded = ref(false)
 const nom = ref('')
 const temps = ref(5)
 const difficulte = ref(5)
 const importance = ref(5)
 const arcId = ref<number | null>(null)
+const frequencyMode = ref<QuestFrequencyMode>(QuestFrequencyMode.DAILY)
+const frequency = ref<number>()
 const errorMessage = ref('')
-
 
 async function handleSubmit() {
   errorMessage.value = ''
@@ -26,14 +28,23 @@ async function handleSubmit() {
     return
   }
 
+  if (frequencyMode.value == QuestFrequencyMode.DAILY) {
+    frequency.value = 1
+  }
+
+  if (frequencyMode.value == QuestFrequencyMode.OCCASIONAL) {
+    frequency.value = 0
+  }
+
   const newQuest: QuestCreate = {
     name: nom.value,
     time_coeff: temps.value,
     difficulty_coeff: difficulte.value,
     importance_coeff: importance.value,
-    arc_id: arcId.value
+    arc_id: arcId.value,
+    frequency_mode: frequencyMode.value,
+    frequency: frequency.value!,
   }
-
 
   try {
     await questStore.createQuest(newQuest)
@@ -41,101 +52,92 @@ async function handleSubmit() {
     temps.value = 5
     difficulte.value = 5
     importance.value = 5
-    isExpanded.value = false
+    arcId.value = null
     errorMessage.value = ''
+    emit('created')
   } catch (err) {
-    errorMessage.value = err.message
+    errorMessage.value = err instanceof Error ? err.message : 'Une erreur est survenue'
   }
 }
-
-
 </script>
 
 <template>
-  <div class="quest-manager">
-    <!-- Expander -->
-    <div class="expander">
-      <button class="expander-header" @click="isExpanded = !isExpanded">
-        ➕ Ajouter une nouvelle quête
-        <span class="chevron" :class="{ open: isExpanded }">▾</span>
-      </button>
+  <form class="quest-form" @submit.prevent="handleSubmit">
+    <h3>➕ Nouvelle quête</h3>
 
-      <form v-if="isExpanded" class="quest-form" @submit.prevent="handleSubmit">
-        <label>
-          Nom de la quête
-          <input v-model="nom" type="text" placeholder="Nom de la quête" />
-        </label>
+    <label>
+      Nom de la quête
+      <input v-model="nom" type="text" placeholder="Nom de la quête" />
+    </label>
 
-        <label>
-          Temps
-          <select v-model.number="temps">
-            <option v-for="opt in options" :key="opt" :value="opt">{{ opt }}</option>
-          </select>
-        </label>
+    <label>
+      Arc
+      <select v-model.number="arcId">
+        <option :value="null">-- Aucun arc --</option>
+        <option v-for="arc in arcStore.arcs" :key="arc.arc_id" :value="arc.arc_id">
+          {{ arc.name }}
+        </option>
+      </select>
+    </label>
 
-        <label>
-          Difficulté
-          <select v-model.number="difficulte">
-            <option v-for="opt in options" :key="opt" :value="opt">{{ opt }}</option>
-          </select>
-        </label>
+    <label>
+      Temps
+      <select v-model.number="temps">
+        <option v-for="opt in options" :key="opt" :value="opt">{{ opt }}</option>
+      </select>
+    </label>
 
-        <label>
-          Importance
-          <select v-model.number="importance">
-            <option v-for="opt in options" :key="opt" :value="opt">{{ opt }}</option>
-          </select>
-        </label>
+    <label>
+      Difficulté
+      <select v-model.number="difficulte">
+        <option v-for="opt in options" :key="opt" :value="opt">{{ opt }}</option>
+      </select>
+    </label>
 
-        <label>
-          Arc
-          <select v-model.number="arcId">
-            <option :value="null">-- Aucun arc --</option>
-            <option v-for="arc in arcStore.arcs" :key="arc.arc_id" :value="arc.arc_id">
-              {{ arc.name }}
-            </option>
-          </select>
-        </label>
+    <label>
+      Importance
+      <select v-model.number="importance">
+        <option v-for="opt in options" :key="opt" :value="opt">{{ opt }}</option>
+      </select>
+    </label>
 
-        <button type="submit">Ajouter</button>
+    <label>
+      Mode de fréquence
+      <select v-model="frequencyMode">
+        <option v-for="mode in Object.values(QuestFrequencyMode)" :key="mode" :value="mode">
+          {{ mode }}
+        </option>
+      </select>
+    </label>
 
-        <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
-      </form>
-    </div>
+    <label
+      v-if="
+        frequencyMode !== QuestFrequencyMode.OCCASIONAL &&
+        frequencyMode !== QuestFrequencyMode.DAILY
+      "
+    >
+      Fréquence
+      <select v-model.number="frequency">
+        <div v-if="frequencyMode === QuestFrequencyMode.WEEKLY">
+          <option v-for="opt in [1, 2, 3, 4, 5, 6]" :key="opt" :value="opt">{{ opt }}</option>
+        </div>
+        <div v-if="frequencyMode === QuestFrequencyMode.MONTHLY">
+          <option v-for="opt in [1, 2, 3, 4]" :key="opt" :value="opt">{{ opt }}</option>
+        </div>
+      </select>
+    </label>
 
+    <button type="submit">Ajouter</button>
 
-  </div>
+    <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
+  </form>
 </template>
 
 <style scoped>
-.expander-header {
-  width: 100%;
-  text-align: left;
-  padding: 0.75rem 1rem;
-  background: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.chevron {
-  transition: transform 0.2s ease;
-}
-.chevron.open {
-  transform: rotate(180deg);
-}
-
 .quest-form {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  padding: 1rem;
-  border: 1px solid #eee;
-  border-top: none;
 }
 
 .quest-form label {
@@ -158,9 +160,4 @@ async function handleSubmit() {
 .error {
   color: #dc2626;
 }
-.success {
-  color: #16a34a;
-}
-
-
 </style>
