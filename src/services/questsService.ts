@@ -1,5 +1,5 @@
 import { API_URL } from '@/config'
-import type { QuestCreate } from '@/types/Quest'
+import type { QuestCreate, QuestsStatusByDate } from '@/types/Quest'
 
 export async function fetchQuests() {
   const response = await fetch(`${API_URL}/quests`)
@@ -16,15 +16,26 @@ export async function createQuest(questCreate: QuestCreate) {
   if (!response.ok) throw new Error("Erreur lors de l'ajout de la quête")
   return response.json()
 }
-
-export async function getCheckedQuestIdsDuringPeriod(
+export async function getAllQuestsStatusDuringPeriod(
   startDate: string,
   endDate: string,
-): Promise<Record<string, number[]>> {
+): Promise<Record<number, QuestsStatusByDate>> {
   const response = await fetch(
-    `${API_URL}/quests/checked?start_date=${startDate}&end_date=${endDate}`,
+    `${API_URL}/quests/status?start_date=${startDate}&end_date=${endDate}`,
   )
-  if (!response.ok) throw new Error('Erreur lors du chargement des validations')
+  if (!response.ok) throw new Error('Erreur lors du chargement du statut des quêtes')
+  return response.json()
+}
+
+export async function getQuestStatusDuringPeriod(
+  questId: number,
+  startDate: string,
+  endDate: string,
+): Promise<QuestsStatusByDate> {
+  const response = await fetch(
+    `${API_URL}/quests/${questId}/status?start_date=${startDate}&end_date=${endDate}`,
+  )
+  if (!response.ok) throw new Error('Erreur lors du chargement du statut de la quête')
   return response.json()
 }
 

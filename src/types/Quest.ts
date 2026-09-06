@@ -17,3 +17,9 @@ export interface Quest {
 }
 
 export type QuestCreate = Omit<Quest, 'quest_id'>
+
+export interface QuestStatus {
+  checked: boolean
+  frequency_reached: boolean
+  streak: number
+}

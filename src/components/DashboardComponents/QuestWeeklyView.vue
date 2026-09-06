@@ -1,23 +1,23 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 import { useQuestsStore } from '@/stores/questsStore'
+import type { Quest } from '@/types/Quest'
 import { getWeekDates, formatDayLabel } from '@/utils/dateManager'
 
-const props = defineProps<{ actualDate: string }>()
+const props = defineProps<{
+  quest: Quest
+  actualDate: string
+}>()
+
 const questsStore = useQuestsStore()
 
 const weekDates = computed(() => getWeekDates(props.actualDate))
 
-watch(
-  weekDates,
-  (dates) => {
-    questsStore.fetchAllCheckedQuestIdsDuringPeriod(dates[0]!, dates[6]!)
-  },
-  { immediate: true },
-)
+const questStatusByDate = computed(() => questsStore.questsStatus[props.quest.quest_id])
 
 async function toggle(questId: number, date: string) {
-  if (questsStore.isQuestCheckedOnDate(questId, date)) {
+  if (!questStatusByDate.value) return
+  if (questStatusByDate.value[date]?.checked) {
     await questsStore.uncheckQuest(questId, date)
   } else {
     await questsStore.checkQuest(questId, date)
@@ -29,21 +29,17 @@ async function toggle(questId: number, date: string) {
   <table class="week-table">
     <thead>
       <tr>
-        <th>Quête</th>
         <th v-for="date in weekDates" :key="date">{{ formatDayLabel(date) }}</th>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="quest in questsStore.quests" :key="quest.quest_id">
-        <td>{{ quest.name }}</td>
-        <td v-for="date in weekDates" :key="date" class="check-cell">
-          <input
-            type="checkbox"
-            :checked="questsStore.isQuestCheckedOnDate(quest.quest_id, date)"
-            @change="toggle(quest.quest_id, date)"
-          />
-        </td>
-      </tr>
+      <td v-for="date in weekDates" :key="date" class="check-cell">
+        <input
+          type="checkbox"
+          :checked="questStatusByDate.value?.[date]?.checked"
+          @change="toggle(quest.quest_id, date)"
+        />
+      </td>
     </tbody>
   </table>
 </template>

@@ -1,18 +1,33 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useQuestsStore } from '@/stores/questsStore'
 import CharacterComponent from '@/components/CharacterComponent.vue'
 import DateManager from '@/components/DashboardComponents/DateManager.vue'
-import QuestDaily from '@/components/DashboardComponents/QuestDaily.vue'
+import QuestDailyView from '@/components/DashboardComponents/QuestDailyView.vue'
 import { dateToString, type ViewMode } from '@/utils/dateManager'
-import WeekView from '@/components/DashboardComponents/WeekView.vue'
-import MonthView from '@/components/DashboardComponents/MonthView.vue'
+import QuestWeeklyView from '@/components/DashboardComponents/QuestWeeklyView.vue'
+import QuestMonthlyView from '@/components/DashboardComponents/QuestMonthlyView.vue'
+import { QuestFrequencyMode } from '@/types/Quest'
+import { getWeekDates } from '@/utils/dateManager'
 
 const questsStore = useQuestsStore()
 
 const actualDate = ref<string>(dateToString(new Date()))
 const viewMode = ref<ViewMode>('day')
 const loading = ref(true)
+
+const dailyQuests = computed(() =>
+  questsStore.quests.filter((q) => q.frequency_mode === QuestFrequencyMode.DAILY),
+)
+const weeklyQuests = computed(() =>
+  questsStore.quests.filter((q) => q.frequency_mode === QuestFrequencyMode.WEEKLY),
+)
+const monthlyQuests = computed(() =>
+  questsStore.quests.filter((q) => q.frequency_mode === QuestFrequencyMode.MONTHLY),
+)
+const occasionalQuests = computed(() =>
+  questsStore.quests.filter((q) => q.frequency_mode === QuestFrequencyMode.OCCASIONAL),
+)
 
 function selectDay(date: string) {
   actualDate.value = date
@@ -22,8 +37,22 @@ function selectDay(date: string) {
 onMounted(async () => {
   loading.value = true
   await questsStore.fetchQuests()
+  await questsStore.fetchAllQuestsStatusDuringPeriod(actualDate.value, actualDate.value)
   loading.value = false
 })
+
+watch(
+  () => actualDate.value,
+  (newDate) => {
+    if (viewMode.value === 'day') {
+      questsStore.fetchAllQuestsStatusDuringPeriod(newDate!, newDate!)
+    } else if (viewMode.value === 'week') {
+      const weekDates = getWeekDates(newDate!)
+      questsStore.fetchAllQuestsStatusDuringPeriod(weekDates[0]!, weekDates[6]!)
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -43,15 +72,50 @@ onMounted(async () => {
     <p v-if="loading">Chargement...</p>
 
     <template v-else>
-      <div v-if="viewMode === 'day'" class="quest-list">
-        <div v-for="quest in questsStore.quests" :key="quest.quest_id" class="quest-row">
-          <QuestDaily :quest="quest" :actual-date="actualDate" />
+      <div class="quest-list">
+        <h3 v-if="dailyQuests.length > 0">Quêtes journalières :</h3>
+        <div v-for="quest in dailyQuests" :key="quest.quest_id">
+          <QuestDailyView v-if="viewMode === 'day'" :quest="quest" :actual-date="actualDate" />
+          <QuestWeeklyView
+            v-else-if="viewMode === 'week'"
+            :quest="quest"
+            :actual-date="actualDate"
+          />
+        </div>
+        <h3 v-if="weeklyQuests.length > 0">Quêtes hebdomadaires :</h3>
+        <div v-for="quest in weeklyQuests" :key="quest.quest_id">
+          <QuestDailyView v-if="viewMode === 'day'" :quest="quest" :actual-date="actualDate" />
+          <QuestWeeklyView
+            v-else-if="viewMode === 'week'"
+            :quest="quest"
+            :actual-date="actualDate"
+          />
+        </div>
+        <h3 v-if="monthlyQuests.length > 0">Quêtes mensuelles :</h3>
+        <div v-for="quest in monthlyQuests" :key="quest.quest_id">
+          <QuestDailyView v-if="viewMode === 'day'" :quest="quest" :actual-date="actualDate" />
+          <QuestWeeklyView
+            v-else-if="viewMode === 'week'"
+            :quest="quest"
+            :actual-date="actualDate"
+          />
+        </div>
+        <h3 v-if="occasionalQuests.length > 0">Quêtes occasionnelles :</h3>
+        <div v-for="quest in occasionalQuests" :key="quest.quest_id">
+          <QuestDailyView v-if="viewMode === 'day'" :quest="quest" :actual-date="actualDate" />
+          <QuestWeeklyView
+            v-else-if="viewMode === 'week'"
+            :quest="quest"
+            :actual-date="actualDate"
+          />
         </div>
       </div>
 
-      <WeekView v-else-if="viewMode === 'week'" :actual-date="actualDate" />
-
-      <MonthView v-else :actual-date="actualDate" @select-day="selectDay" />
+      <QuestMonthlyView
+        v-if="viewMode === 'month'"
+        :actual-date="actualDate"
+        @select-day="selectDay"
+      />
     </template>
 
     <CharacterComponent />
@@ -82,13 +146,5 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
-.quest-row {
-  display: grid;
-  grid-template-columns: 0.7fr 0.2fr 0.1fr;
-  align-items: center;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #eee;
-  border-radius: 6px;
 }
 </style>

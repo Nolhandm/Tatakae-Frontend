@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Temple from '../views/Temple.vue'
 import Dashboard from '../views/DashBoard.vue'
-import Quest from '../views/Quests.vue'
+import QuestManagement from '../views/QuestManagement.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,8 +13,8 @@ const router = createRouter({
     },
     {
       path: '/quests',
-      name: 'Quest',
-      component: Quest,
+      name: 'QuestManagement',
+      component: QuestManagement,
     },
     {
       path: '/dashboard',

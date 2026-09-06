@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onMounted, computed } from 'vue'
 import DeleteQuestButton from './DeleteQuestButton.vue'
-import { useQuestsStore } from '../../stores/questsStore'
-import { useArcsStore } from '../../stores/arcsStore'
+import { useQuestsStore } from '../../stores/questsStore.ts'
+import { useArcsStore } from '../../stores/arcsStore.ts'
 
 const arcStore = useArcsStore()
 const questStore = useQuestsStore()

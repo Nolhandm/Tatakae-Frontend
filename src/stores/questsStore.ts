@@ -1,12 +1,12 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { Quest, QuestCreate } from '@/types/Quest'
+import type { Quest, QuestCreate, QuestStatus } from '@/types/Quest'
 import * as questsService from '@/services/questsService'
 import { useCharacterStore } from '@/stores/characterStore'
 
 export const useQuestsStore = defineStore('questsStore', () => {
   const quests = ref<Quest[]>([])
-  const checkedQuestIdsByDate = ref<Record<string, Set<number>>>({})
+  const questsStatus = ref<Record<number, Record<string, QuestStatus>>>({})
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -22,16 +22,11 @@ export const useQuestsStore = defineStore('questsStore', () => {
       loading.value = false
     }
   }
-
-  async function fetchAllCheckedQuestIdsDuringPeriod(startDate: string, endDate: string) {
+  async function fetchAllQuestsStatusDuringPeriod(startDate: string, endDate: string) {
     loading.value = true
     try {
-      const data = await questsService.getCheckedQuestIdsDuringPeriod(startDate, endDate)
-      const converted: Record<string, Set<number>> = {}
-      for (const [date, ids] of Object.entries(data)) {
-        converted[date] = new Set(ids)
-      }
-      checkedQuestIdsByDate.value = converted
+      const data = await questsService.getAllQuestsStatusDuringPeriod(startDate, endDate)
+      questsStatus.value = data
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Une erreur est survenue'
     } finally {
@@ -39,8 +34,20 @@ export const useQuestsStore = defineStore('questsStore', () => {
     }
   }
 
-  function isQuestCheckedOnDate(questId: number, date: string): boolean {
-    return checkedQuestIdsByDate.value[date]?.has(questId) ?? false
+  async function fetchQuestsStatusDuringPeriod(
+    questId: number,
+    startDate: string,
+    endDate: string,
+  ) {
+    loading.value = true
+    try {
+      const data = await questsService.getQuestStatusDuringPeriod(questId, startDate, endDate)
+      questsStatus.value[questId] = data
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Une erreur est survenue'
+    } finally {
+      loading.value = false
+    }
   }
 
   async function createQuest(questCreate: QuestCreate) {
@@ -55,19 +62,23 @@ export const useQuestsStore = defineStore('questsStore', () => {
 
   async function checkQuest(questId: number, validationDate: string) {
     await questsService.checkQuest(questId, validationDate)
-    checkedQuestIdsByDate.value[validationDate]?.add(questId)
-    // Force reactivity
-    checkedQuestIdsByDate.value = { ...checkedQuestIdsByDate.value }
-
+    const data = await questsService.getQuestStatusDuringPeriod(
+      questId,
+      validationDate,
+      validationDate,
+    )
+    questsStatus.value[questId] = data
     await characterStore.fetchCharacterStats()
   }
 
   async function uncheckQuest(questId: number, validationDate: string) {
     await questsService.uncheckQuest(questId, validationDate)
-    checkedQuestIdsByDate.value[validationDate]?.delete(questId)
-    // Force reactivity
-    checkedQuestIdsByDate.value = { ...checkedQuestIdsByDate.value }
-
+    const data = await questsService.getQuestStatusDuringPeriod(
+      questId,
+      validationDate,
+      validationDate,
+    )
+    questsStatus.value[questId] = data
     await characterStore.fetchCharacterStats()
   }
 
@@ -75,13 +86,13 @@ export const useQuestsStore = defineStore('questsStore', () => {
     quests,
     loading,
     error,
-    checkedQuestIdsByDate,
     fetchQuests,
     createQuest,
     deleteQuest,
-    fetchAllCheckedQuestIdsDuringPeriod,
     checkQuest,
     uncheckQuest,
-    isQuestCheckedOnDate,
+    fetchAllQuestsStatusDuringPeriod,
+    fetchQuestsStatusDuringPeriod,
+    questsStatus,
   }
 })

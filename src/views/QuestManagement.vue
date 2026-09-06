@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import NewQuestForm from '@/components/QuestsComponents/NewQuestForm.vue'
-import QuestsTable from '@/components/QuestsComponents/QuestsTable.vue'
-import NewArcForm from '@/components/QuestsComponents/NewArcForm.vue'
-import ArcFilter from '@/components/QuestsComponents/ArcFilter.vue'
+import NewQuestForm from '@/components/QuestManagementComponents/NewQuestForm.vue'
+import QuestsTable from '@/components/QuestManagementComponents/QuestsTable.vue'
+import NewArcForm from '@/components/QuestManagementComponents/NewArcForm.vue'
+import ArcFilter from '@/components/QuestManagementComponents/ArcFilter.vue'
 import Modal from '@/components/Modal.vue'
 
 const showArcModal = ref(false)
