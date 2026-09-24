@@ -1,13 +1,37 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import NewQuestForm from '@/components/QuestManagementComponents/NewQuestForm.vue'
+import QuestForm from '@/components/QuestManagementComponents/QuestForm.vue'
 import QuestsTable from '@/components/QuestManagementComponents/QuestsTable.vue'
 import NewArcForm from '@/components/QuestManagementComponents/NewArcForm.vue'
-import ArcFilter from '@/components/QuestManagementComponents/ArcFilter.vue'
+import ArcFilter from '@/components/ArcFilter.vue'
 import Modal from '@/components/Modal.vue'
+import { useQuestsStore } from '@/stores/questsStore'
+import type { Quest, QuestCreate } from '@/types/Quest'
+
+const questStore = useQuestsStore()
 
 const showArcModal = ref(false)
 const showQuestModal = ref(false)
+const questBeingEdited = ref<Quest | null>(null)
+
+function openCreateModal() {
+  questBeingEdited.value = null
+  showQuestModal.value = true
+}
+
+function openEditModal(quest: Quest) {
+  questBeingEdited.value = quest
+  showQuestModal.value = true
+}
+
+async function handleQuestSubmit(payload: QuestCreate | Quest) {
+  if ('quest_id' in payload) {
+    await questStore.modifyQuest(payload as Quest)
+  } else {
+    await questStore.createQuest(payload)
+  }
+  showQuestModal.value = false
+}
 </script>
 
 <template>
@@ -18,19 +42,16 @@ const showQuestModal = ref(false)
       <button class="btn-secondary" @click="showArcModal = true">➕ Nouvel arc</button>
     </div>
 
-    <QuestsTable />
+    <QuestsTable @edit-quest="openEditModal" />
 
-    <!-- Bouton "Nouvelle quête" juste sous le tableau -->
-    <button class="btn-primary add-quest-btn" @click="showQuestModal = true">
-      ➕ Nouvelle quête
-    </button>
+    <button class="btn-primary add-quest-btn" @click="openCreateModal">➕ Nouvelle quête</button>
 
     <Modal :show="showArcModal" @close="showArcModal = false">
       <NewArcForm @created="showArcModal = false" />
     </Modal>
 
     <Modal :show="showQuestModal" @close="showQuestModal = false">
-      <NewQuestForm @created="showQuestModal = false" />
+      <QuestForm :initial-quest="questBeingEdited" @submit="handleQuestSubmit" />
     </Modal>
   </div>
 </template>

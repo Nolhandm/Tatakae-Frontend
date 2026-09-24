@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import type { Quest } from '@/types/Quest'
 import { useQuestsStore } from '@/stores/questsStore'
 
 const props = defineProps<{
-  questId: number
+  quest: Quest
 }>()
 
 const questStore = useQuestsStore()
@@ -23,8 +24,7 @@ function cancelConfirmation() {
 async function confirmDelete() {
   isDeleting.value = true
   try {
-    await questStore.deleteQuest(props.questId)
-    emit('deleted', props.questId)
+    await questStore.deleteQuest(props.quest.quest_id)
   } catch (err) {
     emit('error', err)
     console.error(err)
@@ -33,7 +33,6 @@ async function confirmDelete() {
     isConfirming.value = false
   }
 }
-
 </script>
 
 <template>
@@ -49,13 +48,13 @@ async function confirmDelete() {
     </button>
 
     <div v-else class="confirm-box">
-      <span class="confirm-text">Supprimer{{ questName ? ` "${questName}"` : '' }} ?</span>
+      <span class="confirm-text"
+        >Supprimer{{ props.quest.name ? ` "${props.quest.name}"` : '' }} ?</span
+      >
       <button class="confirm-yes" @click="confirmDelete" :disabled="isDeleting">
         {{ isDeleting ? '...' : 'Oui' }}
       </button>
-      <button class="confirm-no" @click="cancelConfirmation" :disabled="isDeleting">
-        Non
-      </button>
+      <button class="confirm-no" @click="cancelConfirmation" :disabled="isDeleting">Non</button>
     </div>
   </div>
 </template>

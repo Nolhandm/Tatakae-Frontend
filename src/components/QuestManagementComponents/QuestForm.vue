@@ -1,12 +1,18 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useQuestsStore } from '@/stores/questsStore'
+import { ref, watch } from 'vue'
+import type { Quest } from '@/types/Quest'
 import { useArcsStore } from '@/stores/arcsStore'
 import { type QuestCreate, QuestFrequencyMode } from '@/types/Quest'
 
-const emit = defineEmits(['created'])
+const props = defineProps<{
+  initialQuest?: Quest | null
+}>()
 
-const questStore = useQuestsStore()
+const emit = defineEmits<{
+  submit: [quest: QuestCreate | Quest]
+  cancel: []
+}>()
+
 const arcStore = useArcsStore()
 
 const options = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -19,6 +25,18 @@ const arcId = ref<number | null>(null)
 const frequencyMode = ref<QuestFrequencyMode>(QuestFrequencyMode.DAILY)
 const frequency = ref<number>()
 const errorMessage = ref('')
+
+function resetFromQuest(quest?: Quest | null) {
+  nom.value = quest?.name ?? ''
+  temps.value = quest?.time_coeff ?? 5
+  difficulte.value = quest?.difficulty_coeff ?? 5
+  importance.value = quest?.importance_coeff ?? 5
+  arcId.value = quest?.arc_id ?? null
+  frequencyMode.value = quest?.frequency_mode ?? QuestFrequencyMode.DAILY
+  frequency.value = quest?.frequency
+}
+
+watch(() => props.initialQuest, resetFromQuest, { immediate: true })
 
 async function handleSubmit() {
   errorMessage.value = ''
@@ -36,7 +54,7 @@ async function handleSubmit() {
     frequency.value = 0
   }
 
-  const newQuest: QuestCreate = {
+  const payload: QuestCreate = {
     name: nom.value,
     time_coeff: temps.value,
     difficulty_coeff: difficulte.value,
@@ -46,24 +64,17 @@ async function handleSubmit() {
     frequency: frequency.value!,
   }
 
-  try {
-    await questStore.createQuest(newQuest)
-    nom.value = ''
-    temps.value = 5
-    difficulte.value = 5
-    importance.value = 5
-    arcId.value = null
-    errorMessage.value = ''
-    emit('created')
-  } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : 'Une erreur est survenue'
+  if (props.initialQuest) {
+    emit('submit', { ...payload, quest_id: props.initialQuest.quest_id })
+  } else {
+    emit('submit', payload)
   }
 }
 </script>
 
 <template>
   <form class="quest-form" @submit.prevent="handleSubmit">
-    <h3>➕ Nouvelle quête</h3>
+    <h3>{{ props.initialQuest ? '✏️ Modifier la quête' : '➕ Nouvelle quête' }}</h3>
 
     <label>
       Nom de la quête
@@ -127,7 +138,7 @@ async function handleSubmit() {
       </select>
     </label>
 
-    <button type="submit">Ajouter</button>
+    <button type="submit">{{ props.initialQuest ? 'Enregistrer' : 'Ajouter' }}</button>
 
     <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
   </form>

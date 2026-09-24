@@ -5,19 +5,23 @@ import type { Quest } from '@/types/Quest'
 import { getWeekDates, formatDayLabel } from '@/utils/dateManager'
 
 const props = defineProps<{
-  quest: Quest
+  quests: Quest[]
   actualDate: string
+  header?: boolean
 }>()
 
 const questsStore = useQuestsStore()
 
+const emit = defineEmits<{ selectQuest: [quest: Quest] }>()
+
 const weekDates = computed(() => getWeekDates(props.actualDate))
 
-const questStatusByDate = computed(() => questsStore.questsStatus[props.quest.quest_id])
-
+function getStatusForDate(questId: number, date: string) {
+  return questsStore.questsStatus[questId]?.[date]
+}
 async function toggle(questId: number, date: string) {
-  if (!questStatusByDate.value) return
-  if (questStatusByDate.value[date]?.checked) {
+  if (!getStatusForDate(questId, date)) return
+  if (getStatusForDate(questId, date)?.checked) {
     await questsStore.uncheckQuest(questId, date)
   } else {
     await questsStore.checkQuest(questId, date)
@@ -26,20 +30,33 @@ async function toggle(questId: number, date: string) {
 </script>
 
 <template>
-  <table class="week-table">
+  <table class="week-table" v-if="props.quests.length > 0">
     <thead>
       <tr>
+        <th>Quête</th>
         <th v-for="date in weekDates" :key="date">{{ formatDayLabel(date) }}</th>
       </tr>
     </thead>
     <tbody>
-      <td v-for="date in weekDates" :key="date" class="check-cell">
-        <input
-          type="checkbox"
-          :checked="questStatusByDate.value?.[date]?.checked"
-          @change="toggle(quest.quest_id, date)"
-        />
-      </td>
+      <tr v-for="quest in props.quests" :key="quest.quest_id">
+        <td @click="emit('selectQuest', quest)" style="cursor: pointer">
+          {{ quest.name }}
+          <div class="quest-info">
+            ⏱️ {{ quest.time_coeff }} | ⚡ {{ quest.difficulty_coeff }} | ❗
+            {{ quest.importance_coeff }}
+          </div>
+          <div class="quest-info">
+            🔥 {{ getStatusForDate(quest.quest_id, weekDates[6]!)?.streak }}
+          </div>
+        </td>
+        <td v-for="date in weekDates" :key="date" class="check-cell">
+          <input
+            type="checkbox"
+            :checked="getStatusForDate(quest.quest_id, date)?.checked"
+            @change="toggle(quest.quest_id, date)"
+          />
+        </td>
+      </tr>
     </tbody>
   </table>
 </template>

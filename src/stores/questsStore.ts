@@ -7,6 +7,7 @@ import { useCharacterStore } from '@/stores/characterStore'
 export const useQuestsStore = defineStore('questsStore', () => {
   const quests = ref<Quest[]>([])
   const questsStatus = ref<Record<number, Record<string, QuestStatus>>>({})
+  const selectedQuest = ref<Quest | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -67,7 +68,10 @@ export const useQuestsStore = defineStore('questsStore', () => {
       validationDate,
       validationDate,
     )
-    questsStatus.value[questId] = data
+    questsStatus.value[questId] = {
+      ...questsStatus.value[questId],
+      ...data,
+    }
     await characterStore.fetchCharacterStats()
   }
 
@@ -78,8 +82,20 @@ export const useQuestsStore = defineStore('questsStore', () => {
       validationDate,
       validationDate,
     )
-    questsStatus.value[questId] = data
+    questsStatus.value[questId] = {
+      ...questsStatus.value[questId],
+      ...data,
+    }
     await characterStore.fetchCharacterStats()
+  }
+
+  async function modifyQuest(quest: Quest) {
+    const index = quests.value.findIndex((q) => q.quest_id === quest.quest_id)
+    if (index >= 0) {
+      const data = await questsService.modifyQuest(quest)
+      quests.value[index] = data
+      if (selectedQuest.value?.quest_id == quest.quest_id) selectedQuest.value = data
+    }
   }
 
   return {
@@ -94,5 +110,7 @@ export const useQuestsStore = defineStore('questsStore', () => {
     fetchAllQuestsStatusDuringPeriod,
     fetchQuestsStatusDuringPeriod,
     questsStatus,
+    selectedQuest,
+    modifyQuest,
   }
 })

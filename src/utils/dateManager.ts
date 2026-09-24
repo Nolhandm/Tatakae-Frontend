@@ -49,7 +49,11 @@ export function shiftDateByMode(date: string, mode: ViewMode, direction: 1 | -1)
 }
 
 export function formatDayLabel(date: string): string {
-  return new Date(date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' })
+  return new Date(date).toLocaleDateString('fr-FR', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'numeric',
+  })
 }
 
 export function formatMonthLabel(date: string): string {

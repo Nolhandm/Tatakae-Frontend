@@ -1,5 +1,5 @@
 import { API_URL } from '@/config'
-import type { QuestCreate, QuestsStatusByDate } from '@/types/Quest'
+import type { Quest, QuestCreate, QuestStatus } from '@/types/Quest'
 
 export async function fetchQuests() {
   const response = await fetch(`${API_URL}/quests`)
@@ -19,7 +19,7 @@ export async function createQuest(questCreate: QuestCreate) {
 export async function getAllQuestsStatusDuringPeriod(
   startDate: string,
   endDate: string,
-): Promise<Record<number, QuestsStatusByDate>> {
+): Promise<Record<number, Record<string, QuestStatus>>> {
   const response = await fetch(
     `${API_URL}/quests/status?start_date=${startDate}&end_date=${endDate}`,
   )
@@ -31,7 +31,7 @@ export async function getQuestStatusDuringPeriod(
   questId: number,
   startDate: string,
   endDate: string,
-): Promise<QuestsStatusByDate> {
+): Promise<Record<string, QuestStatus>> {
   const response = await fetch(
     `${API_URL}/quests/${questId}/status?start_date=${startDate}&end_date=${endDate}`,
   )
@@ -65,5 +65,15 @@ export async function deleteQuest(questId: number) {
     method: 'DELETE',
   })
   if (!response.ok) throw new Error('Erreur lors de la suppression de la quête')
+  return response.json()
+}
+
+export async function modifyQuest(quest: Quest) {
+  const response = await fetch(`${API_URL}/quests/modify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(quest),
+  })
+  if (!response.ok) throw new Error('Erreur lors de la modification de la quête')
   return response.json()
 }

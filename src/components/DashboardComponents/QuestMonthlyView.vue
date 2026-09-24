@@ -1,29 +1,16 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
-import { useQuestsStore } from '@/stores/questsStore'
+import { computed } from 'vue'
 import { getMonthGrid } from '@/utils/dateManager'
+import type { Quest } from '@/types/Quest'
 
-const props = defineProps<{ actualDate: string }>()
+const props = defineProps<{
+  quest: Quest
+  actualDate: string
+}>()
+
 const emit = defineEmits<{ selectDay: [date: string] }>()
 
-const questsStore = useQuestsStore()
 const weeks = computed(() => getMonthGrid(props.actualDate))
-const allDates = computed(() => weeks.value.flat())
-
-watch(
-  allDates,
-  (dates) => {
-    questsStore.fetchAllCheckedQuestIdsDuringPeriod(dates[0]!, dates[dates.length - 1]!)
-  },
-  { immediate: true },
-)
-
-function completionRatio(date: string): number {
-  const total = questsStore.quests.length
-  if (total === 0) return 0
-  const checked = questsStore.checkedQuestIdsByDate[date]?.size ?? 0
-  return checked / total
-}
 
 function isCurrentMonth(date: string): boolean {
   return new Date(date).getMonth() === new Date(props.actualDate).getMonth()
@@ -32,13 +19,14 @@ function isCurrentMonth(date: string): boolean {
 
 <template>
   <div class="month-grid">
+    <h1>{{ quest.name }}</h1>
     <div v-for="week in weeks" :key="week[0]" class="month-week">
       <div
         v-for="date in week"
         :key="date"
         class="month-cell"
         :class="{ 'other-month': !isCurrentMonth(date) }"
-        :style="{ '--fill': `${completionRatio(date) * 100}%` }"
+        :style="{ '--fill': `${1 * 100}%` }"
         @click="emit('selectDay', date)"
       >
         <span class="day-number">{{ new Date(date).getDate() }}</span>

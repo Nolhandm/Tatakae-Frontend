@@ -8,6 +8,12 @@ const props = defineProps<{
   actualDate: string
 }>()
 
+const emit = defineEmits<{ selectQuest: [quest: Quest] }>()
+
+function selectQuest() {
+  emit('selectQuest', props.quest)
+}
+
 const questsStore = useQuestsStore()
 
 const questStatus = computed(
@@ -32,7 +38,7 @@ async function toggleQuest() {
       'frequency-not-reached': questStatus && !questStatus.frequency_reached,
     }"
   >
-    <div>
+    <div @click="selectQuest" style="cursor: pointer">
       <div class="quest-name">{{ props.quest.name }}</div>
       <div class="quest-info">
         ⏱️ {{ props.quest.time_coeff }} | ⚡ {{ props.quest.difficulty_coeff }} | ❗

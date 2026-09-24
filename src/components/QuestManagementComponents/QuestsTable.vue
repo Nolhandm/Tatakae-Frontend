@@ -3,9 +3,12 @@ import { onMounted, computed } from 'vue'
 import DeleteQuestButton from './DeleteQuestButton.vue'
 import { useQuestsStore } from '../../stores/questsStore.ts'
 import { useArcsStore } from '../../stores/arcsStore.ts'
+import type { Quest } from '@/types/Quest.ts'
 
 const arcStore = useArcsStore()
 const questStore = useQuestsStore()
+
+const emit = defineEmits<{ editQuest: [quest: Quest] }>()
 
 const filteredQuests = computed(() => {
   if (arcStore.selectedArcId === null) {
@@ -31,6 +34,7 @@ onMounted(() => {
         <th>Difficulté</th>
         <th>Importance</th>
         <th>Fréquence</th>
+        <th>Modifier</th>
         <th>Supprimer</th>
       </tr>
     </thead>
@@ -44,7 +48,10 @@ onMounted(() => {
         <td>{{ quest.importance_coeff }}</td>
         <td>{{ quest.frequency_mode }} - {{ quest.frequency }}</td>
         <td>
-          <DeleteQuestButton :questId="quest.quest_id" @error="console.error" />
+          <button @click="emit('editQuest', quest)" class="edit-btn">✏️</button>
+        </td>
+        <td>
+          <DeleteQuestButton :quest="quest" @error="console.error" />
         </td>
       </tr>
     </tbody>
@@ -52,6 +59,16 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.edit-btn {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+
 .quest-table {
   width: 100%;
   border-collapse: collapse;

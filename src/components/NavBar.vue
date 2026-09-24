@@ -11,12 +11,18 @@ import { RouterLink } from 'vue-router'
 </template>
 
 <style scoped>
+:global(:root) {
+  --navbar-height: 64px;
+}
+
 .navbar {
   display: flex;
   gap: 1.5rem;
-  padding: 1rem 2rem;
+  height: var(--navbar-height);
+  padding: 0 2rem;
   background: #1e1b4b;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .nav-link {
@@ -25,7 +31,9 @@ import { RouterLink } from 'vue-router'
   font-weight: 500;
   padding: 0.4rem 0.8rem;
   border-radius: 6px;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
 }
 
 .nav-link:hover {

@@ -1,5 +1,6 @@
 <script setup>
 import NavBar from '@/components/NavBar.vue'
+import SideDrawer from '@/components/SideDrawer.vue'
 </script>
 
 <template>
@@ -7,6 +8,7 @@ import NavBar from '@/components/NavBar.vue'
   <main>
     <RouterView />
   </main>
+  <SideDrawer />
 </template>
 
 <style scoped>
